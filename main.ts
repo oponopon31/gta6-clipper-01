@@ -10,6 +10,7 @@
 // On success it prints nothing and out/VIDEO.json matches VIDEO.json here.
 
 import { copyFileSync, mkdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const botDir = process.env.MAKEFUN_BOT_DIR ?? '/bot';
@@ -23,3 +24,13 @@ try {
   console.error(`could not copy VIDEO.json out of ${botDir}: ${(error as Error).message}`);
   process.exit(1);
 }
+
+// Hand-in check: refuse a placeholder address loudly here instead of at
+// the gate. The starter ships VIDEO.json with a placeholder URL holding a
+// "<id>" token; a real handed-in address is a plain https URL.
+const handedIn = JSON.parse(readFileSync(join(outDir, 'VIDEO.json'), 'utf8')) as { url?: unknown };
+if (typeof handedIn.url !== 'string' || !handedIn.url.startsWith('https://') || handedIn.url.includes('<')) {
+  console.error(`VIDEO.json does not name a real video address: ${JSON.stringify(handedIn.url)}`);
+  process.exit(1);
+}
+console.log(`gta6-clipper-01: handing in ${handedIn.url}`);
